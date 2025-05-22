@@ -1,7 +1,7 @@
-package github.yairm210.`kotlin-ir-explorer`.server
+package github.yairm210.kotlin_ir_explorer.server
 
 import getCompilationResult
-import github.yairm210.`kotlin-ir-explorer`.core.IrMermaidGraphConverter
+import github.yairm210.kotlin_ir_explorer.core.IrMermaidGraphConverter
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.dump
 
