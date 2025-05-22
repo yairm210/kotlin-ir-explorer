@@ -24,15 +24,16 @@ object IrMermaidGraphConverter {
 
 class IrMermaidGraphListener:IrElementVisitor<Unit, Triple<IrElement?, StringBuilder, Int>> {
     override fun visitElement(element: IrElement, data: Triple<IrElement?, StringBuilder, Int>) {
-        val (parent, stringbuilder, depth) = data
+        val (parent, stringbuilder:StringBuilder, depth) = data
         
-        stringbuilder.repeat("  ", depth)
+        // Don't use stringbuilder.repeat since it's new to JVM 21
+        stringbuilder.append("  ".repeat(depth))
         // Need to escape the rendered string to avoid issues with mermaid
         stringbuilder.appendLine("${element.hashCode()}[\"${element.render()}\"]")
         
         // IDs of the elements are the hashcodes
         if (parent != null) {
-            stringbuilder.repeat("  ", depth)
+            stringbuilder.append("  ".repeat(depth))
             stringbuilder.appendLine("${parent.hashCode()} --> ${element.hashCode()}")
         }
         // User-visible text is just the classname for now

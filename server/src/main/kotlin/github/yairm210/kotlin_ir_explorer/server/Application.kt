@@ -10,6 +10,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.dump
 
 fun main(args: Array<String>) {
@@ -26,6 +27,7 @@ fun Application.module() {
 }
 
 
+@OptIn(UnsafeDuringIrConstructionAPI::class)
 fun Application.configureRouting() {
     routing {
         get("/api/kotlinToMermaid/{kotlinCode}") {
