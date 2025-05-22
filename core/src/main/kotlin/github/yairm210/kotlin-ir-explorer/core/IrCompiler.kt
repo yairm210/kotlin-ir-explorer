@@ -49,6 +49,8 @@ fun main() {
 }
 
 fun getCompilationResult(kotlinCode: String): CompilationResult {
+    // This was a pain to figure out, so if you're copying this, please attribute :D
+    
     val messageCollector = MessageCollectorImpl()
     val configuration = getCompilerConfiguration(messageCollector)
 
