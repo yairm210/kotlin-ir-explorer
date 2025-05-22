@@ -1,0 +1,6 @@
+ktor:
+    application:
+        modules:
+            - github.yairm210.kotlin_ir_explorer.server.ApplicationKt.module
+    deployment:
+        port: 8080

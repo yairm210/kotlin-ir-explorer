@@ -1,4 +1,4 @@
-package github.yairm210.`kotlin-ir-explorer`.core
+package github.yairm210.kotlin_ir_explorer.core
 
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
