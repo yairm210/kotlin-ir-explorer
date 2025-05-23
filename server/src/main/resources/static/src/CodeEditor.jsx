@@ -1,236 +1,171 @@
-import React, { useEffect, useRef } from 'react';
-import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import React, { useEffect, useRef, useState } from 'react';
 
 export default function CodeEditor({ code, onChange }) {
-    const textareaRef = useRef(null);
-    const preRef = useRef(null);
-    const lineNumbersRef = useRef(null);
+    const containerRef = useRef(null);
+    const [editor, setEditor] = useState(null);
+    const [monacoLoaded, setMonacoLoaded] = useState(false);
+    const [initializing, setInitializing] = useState(true);
 
-    // Function to update the highlighted view
-    const updateHighlightedCode = () => {
-        if (!preRef.current || !textareaRef.current || !lineNumbersRef.current) return;
-
-        // Get the content and apply basic syntax highlighting
-        const content = textareaRef.current.value;
-
-        // Apply kotlin syntax highlighting
-        const highlightedHTML = highlightKotlin(content);
-        preRef.current.innerHTML = highlightedHTML;
-
-        // Update line numbers
-        const lines = content.split('\n').length;
-        let lineNumbersHTML = '';
-        for (let i = 1; i <= lines; i++) {
-            lineNumbersHTML += `<div class="line-number">${i}</div>`;
-        }
-        lineNumbersRef.current.innerHTML = lineNumbersHTML;
-
-        // Sync scroll positions
-        preRef.current.scrollTop = textareaRef.current.scrollTop;
-        preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-        lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
-    };
-
-    // Highlight kotlin code
-    const highlightKotlin = (code) => {
-        // Keywords
-        const keywords = ['fun', 'val', 'var', 'class', 'object', 'interface', 'abstract', 'override',
-            'private', 'protected', 'public', 'internal', 'companion', 'import', 'package',
-            'if', 'else', 'when', 'for', 'while', 'do', 'try', 'catch', 'finally', 'throw',
-            'return', 'break', 'continue', 'in', 'is', 'as', 'typeof', 'true', 'false', 'null',
-            'this', 'super', 'constructor', 'data', 'enum', 'sealed', 'suspend', 'by', 'init'];
-
-        // Types
-        const types = ['String', 'Int', 'Double', 'Float', 'Boolean', 'Char', 'Long', 'Short',
-            'Byte', 'Any', 'Unit', 'Nothing', 'Array', 'List', 'Map', 'Set', 'Pair'];
-
-        // Escape HTML to avoid XSS
-        let result = code.replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-
-        // Highlight keywords
-        for (const keyword of keywords) {
-            const regex = new RegExp(`\\b${keyword}\\b`, 'g');
-            result = result.replace(regex, `<span class="keyword">${keyword}</span>`);
-        }
-
-        // Highlight types
-        for (const type of types) {
-            const regex = new RegExp(`\\b${type}\\b`, 'g');
-            result = result.replace(regex, `<span class="type">${type}</span>`);
-        }
-
-        // Highlight strings (simplified approach)
-        result = result.replace(/"([^"]*)"/g, '<span class="string">"$1"</span>');
-
-        // Highlight single-line comments
-        result = result.replace(/\/\/(.*$)/gm, '<span class="comment">//$1</span>');
-
-        // Highlight numbers
-        result = result.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
-
-        // Highlight annotations
-        result = result.replace(/@(\w+)/g, '<span class="annotation">@$1</span>');
-
-        return result;
-    };
-
-    // Handle textarea input changes
-    const handleChange = (e) => {
-        onChange(e.target.value);
-        updateHighlightedCode();
-    };
-
-    // Add listeners on mount
+    // Load Monaco Editor script
     useEffect(() => {
-        if (!textareaRef.current) return;
-
-        updateHighlightedCode();
-
-        // Sync scroll
-        const handleScroll = () => {
-            if (preRef.current && lineNumbersRef.current) {
-                preRef.current.scrollTop = textareaRef.current.scrollTop;
-                preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-                lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
-            }
-        };
-
-        // Handle tabs
-        const handleTab = (e) => {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                const start = textareaRef.current.selectionStart;
-                const end = textareaRef.current.selectionEnd;
-
-                // Insert tab at cursor position
-                const newValue = textareaRef.current.value.substring(0, start) + '    ' +
-                    textareaRef.current.value.substring(end);
-
-                textareaRef.current.value = newValue;
-                textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 4;
-
-                // Trigger update to highlighted code
-                onChange(newValue);
-                updateHighlightedCode();
-            }
-        };
-
-        // Update highlighted code when component receives new code prop
-        if (code !== textareaRef.current.value) {
-            textareaRef.current.value = code;
-            updateHighlightedCode();
+        if (window.monaco) {
+            setMonacoLoaded(true);
+            return;
         }
 
-        textareaRef.current.addEventListener('scroll', handleScroll);
-        textareaRef.current.addEventListener('keydown', handleTab);
+        // Create a script element for Monaco loader
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.43.0/min/vs/loader.js';
+        script.async = true;
+        script.onload = () => {
+            // Configure require path
+            window.require.config({
+                paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.43.0/min/vs' }
+            });
+
+            // Need to explicitly tell Monaco to use the VS Code dark theme
+            window.require.config({ 'vs/nls': { availableLanguages: { '*': 'en' } } });
+
+            // Load Monaco modules
+            window.require(['vs/editor/editor.main'], () => {
+                setMonacoLoaded(true);
+            });
+        };
+
+        document.body.appendChild(script);
 
         return () => {
-            if (textareaRef.current) {
-                textareaRef.current.removeEventListener('scroll', handleScroll);
-                textareaRef.current.removeEventListener('keydown', handleTab);
-            }
+            document.body.removeChild(script);
         };
-    }, [code]);
+    }, []);
 
-    // Example function to format code with simple indentation rules
-    const formatCode = () => {
-        if (!textareaRef.current) return;
+    // Create and configure editor once Monaco is loaded
+    useEffect(() => {
+        if (!monacoLoaded || !containerRef.current) return;
 
-        let code = textareaRef.current.value;
-        let formattedCode = '';
-        let indentLevel = 0;
-        const lines = code.split('\n');
+        // Define Kotlin language
+        if (!window.monaco.languages.getLanguages().some(({ id }) => id === 'kotlin')) {
+            // Register the language
+            window.monaco.languages.register({ id: 'kotlin' });
 
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-
-            // Decrease indent if line starts with closing brace
-            if (line.startsWith('}')) {
-                indentLevel = Math.max(0, indentLevel - 1);
-            }
-
-            // Add indentation
-            const indent = '    '.repeat(indentLevel);
-            formattedCode += indent + line + '\n';
-
-            // Increase indent if line ends with opening brace
-            if (line.endsWith('{')) {
-                indentLevel++;
-            }
+            // Define syntax highlighting tokens
+            window.monaco.languages.setMonarchTokensProvider('kotlin', {
+                tokenizer: {
+                    root: [
+                        [/\b(package|import|class|interface|object|fun|val|var|when|if|else|for|while|return|constructor|companion|data|sealed|enum|override|open|private|protected|public|internal|final|abstract|suspend|lateinit|inline|get|set|this|super)\b/, 'keyword'],
+                        [/\b(Int|String|Boolean|Float|Double|Long|Short|Byte|Any|Unit|Nothing)\b/, 'type'],
+                        [/\/\/.*$/, 'comment'],
+                        [/\/\*/, 'comment', '@comment'],
+                        [/"/, 'string', '@string_double'],
+                        [/'[^']*'/, 'string'],
+                        [/\d+/, 'number'],
+                        [/@\w+/, 'annotation'],
+                    ],
+                    comment: [
+                        [/[^/*]+/, 'comment'],
+                        [/\/\*/, 'comment', '@push'],
+                        [/\*\//, 'comment', '@pop'],
+                        [/[/*]/, 'comment']
+                    ],
+                    string_double: [
+                        [/[^\\"]+/, 'string'],
+                        [/\\./, 'string.escape'],
+                        [/"/, 'string', '@pop']
+                    ]
+                }
+            });
         }
 
-        onChange(formattedCode.trim());
-        updateHighlightedCode();
-    };
+        // Define a dark dracula-inspired theme
+        window.monaco.editor.defineTheme('kotlinDarkDracula', {
+            base: 'vs-dark',
+            inherit: true,
+            rules: [
+                { token: 'comment', foreground: '6272a4' },
+                { token: 'keyword', foreground: 'ff79c6', fontStyle: 'bold' },
+                { token: 'string', foreground: 'f1fa8c' },
+                { token: 'number', foreground: 'bd93f9' },
+                { token: 'type', foreground: '8be9fd' },
+                { token: 'annotation', foreground: '50fa7b' },
+            ],
+            colors: {
+                'editor.background': '#1a1c25',
+                'editor.foreground': '#f8f8f2',
+                'editor.lineHighlightBackground': '#2d303e',
+                'editor.selectionBackground': '#44475a',
+                'editorCursor.foreground': '#f8f8f2',
+                'editorWhitespace.foreground': '#3B3A32',
+                'editorIndentGuide.activeBackground': '#9D550FB0',
+                'editor.selectionHighlightBorder': '#222218'
+            }
+        });
+
+        // Set the default theme explicitly to dark before creating the editor
+        window.monaco.editor.setTheme('kotlinDarkDracula');
+
+        // Initialize Monaco editor with the custom theme
+        const editorInstance = window.monaco.editor.create(containerRef.current, {
+            value: code,
+            language: 'kotlin',
+            theme: 'kotlinDarkDracula',
+            automaticLayout: true,
+            minimap: { enabled: true },
+            scrollBeyondLastLine: false,
+            fontSize: 14,
+            fontFamily: "'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace",
+            lineNumbers: 'on',
+            renderLineHighlight: 'all',
+            scrollbar: {
+                useShadows: true,
+                verticalScrollbarSize: 10,
+                horizontalScrollbarSize: 10
+            },
+            padding: { top: 16 },
+            bracketPairColorization: { enabled: true },
+            autoClosingBrackets: 'always'
+        });
+
+        // Add event listener for content changes
+        const disposable = editorInstance.onDidChangeModelContent(() => {
+            onChange(editorInstance.getValue());
+        });
+
+        setEditor(editorInstance);
+        setInitializing(false);
+
+        // Clean up
+        return () => {
+            disposable.dispose();
+            editorInstance.dispose();
+        };
+    }, [monacoLoaded, containerRef]);
+
+    // Update editor value when code prop changes
+    useEffect(() => {
+        if (editor && code !== editor.getValue()) {
+            editor.setValue(code);
+        }
+    }, [code, editor]);
 
     return (
-        <div className="h-full w-full flex flex-col">
-            <div className="bg-slate-900 p-2 border-b border-slate-700 flex justify-between items-center">
-                <span className="text-sky-400 text-xs font-medium">Kotlin Code</span>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={formatCode}
-                    className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300">
-                    <Check className="h-3 w-3 mr-1" /> Format
-                </Button>
-            </div>
-
-            <div className="flex-grow relative overflow-hidden">
-                {/* Line Numbers */}
-                <div ref={lineNumbersRef} className="line-numbers absolute left-0 top-0 bottom-0 w-12 bg-slate-900 z-10 text-right overflow-hidden pt-4 select-none text-slate-500">
+        <div className="h-full w-full flex flex-col overflow-hidden">
+            {initializing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-[#1a1c25] z-10">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-400 mx-auto"></div>
+                        <p className="mt-4 text-slate-300">Loading editor...</p>
+                    </div>
                 </div>
-
-                {/* Syntax highlighted view */}
-                <pre ref={preRef}
-                     className="code-display absolute left-12 right-0 top-0 bottom-0 p-4 m-0 overflow-auto bg-slate-800 z-0"
-                     aria-hidden="true">
-        </pre>
-
-                {/* Actual textarea for editing - transparent but on top of the highlighted code */}
-                <textarea
-                    ref={textareaRef}
-                    value={code}
-                    onChange={handleChange}
-                    placeholder="Enter Kotlin code here..."
-                    className="absolute left-12 right-0 top-0 bottom-0 p-4 bg-transparent text-transparent caret-white border-none resize-none w-[calc(100%-3rem)] h-full focus:outline-none font-mono text-sm leading-relaxed z-20"
-                    spellCheck="false"
-                />
-            </div>
-
-            <style jsx>{`
-        .code-display, textarea {
-          white-space: pre;
-          font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
-          font-size: 14px;
-          line-height: 1.5;
-          tab-size: 4;
-        }
-        
-        .line-numbers {
-          font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
-          font-size: 14px;
-          line-height: 1.5;
-          padding-right: 0.5rem;
-        }
-        
-        .line-number {
-          padding-right: 0.5rem;
-          height: 1.5rem;
-        }
-        
-        .keyword { color: #ff79c6; } /* Pink */
-        .type { color: #8be9fd; } /* Cyan */
-        .string { color: #f1fa8c; } /* Yellow */
-        .comment { color: #6272a4; } /* Purple-ish */
-        .number { color: #bd93f9; } /* Purple */
-        .annotation { color: #50fa7b; } /* Green */
-      `}</style>
+            )}
+            <div
+                ref={containerRef}
+                className="h-full w-full overflow-hidden flex-grow"
+                style={{
+                    backgroundColor: '#1a1c25',
+                    border: 'none',
+                    outline: 'none'
+                }}
+            />
         </div>
     );
 }
