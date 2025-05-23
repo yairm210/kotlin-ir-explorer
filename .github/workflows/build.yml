@@ -32,3 +32,9 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew build
+
+    - name: Build static site
+      run: |
+        cd server/src/main/resources/static
+        npm install
+        npm run build

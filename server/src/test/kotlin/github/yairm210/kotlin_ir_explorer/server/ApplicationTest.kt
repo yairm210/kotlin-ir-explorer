@@ -14,7 +14,7 @@ class ApplicationTest {
             // do not use module since this as built in content negotiation
             configureRouting()
         }
-        client.get("/").apply {
+        client.post("/").apply {
             assertEquals(HttpStatusCode.OK, status)
         }
     }
