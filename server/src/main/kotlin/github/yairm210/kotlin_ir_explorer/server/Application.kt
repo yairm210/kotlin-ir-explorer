@@ -67,6 +67,6 @@ fun Application.configureRouting() {
             call.respond(response)
         }
         // Static plugin. Try to access `/static/index.html`
-        staticResources("/", "static")
+        staticResources("/", "static/dist")
     }
 }
