@@ -1,20 +1,16 @@
-
 import React, { useState, useEffect, useRef } from "react";
 // import { CodeProject } from "@/entities/CodeProject";
-// import { User } from "@/entities/User"; // User not explicitly used yet, can be added later if needed
-import CodeEditor from "../src/CodeEditor.jsx";
-import GraphViewer from "../src/GraphViewer.jsx";
-// No direct mermaid import needed here anymore
-// import axios from 'axios'; // Not used in current placeholder
-import { Loader2, Save, Download, Upload } from "lucide-react";
+import CodeEditor from "./CodeEditor";
+import GraphViewer from "./GraphViewer";
+import { Loader2, Save, Download, Upload, Code, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {  
+import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogFooter, 
+    DialogFooter,
     DialogDescription
 } from "@/components/ui/dialog";
 
@@ -22,6 +18,7 @@ import {
 // const API_URL = "https://your-backend-api.com/generate-mermaid";
 
 export default function CodeVisualizerPage() {
+    // Initial example Kotlin code
     const [code, setCode] = useState(`// Example Kotlin code
 fun main() {
     val greeting = "Hello, Kotlin!"
@@ -31,6 +28,7 @@ fun main() {
     println(person.introduce())
 }
 
+// Person class represents a person with name and age
 class Person(private val name: String, private val age: Int) {
     fun introduce(): String {
         return "I'm $name, $age years old."
@@ -39,8 +37,34 @@ class Person(private val name: String, private val age: Int) {
     fun celebrate() {
         println("$name is celebrating their birthday!")
     }
+}
+
+// Interface example
+interface Drawable {
+    fun draw()
+    fun resize(factor: Double)
+}
+
+// Class implementing interface
+class Circle(private var radius: Double) : Drawable {
+    override fun draw() {
+        println("Drawing circle with radius $radius")
+    }
+    
+    override fun resize(factor: Double) {
+        radius *= factor
+    }
+}
+
+// Data class example
+data class Point(val x: Int, val y: Int)
+
+// Enum example
+enum class Direction {
+    NORTH, SOUTH, EAST, WEST
 }`);
-    const [mermaidGraphText, setMermaidGraphText] = useState(""); // Store Mermaid text
+
+    const [mermaidGraphText, setMermaidGraphText] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
     const [projectTitle, setProjectTitle] = useState("Untitled Project");
@@ -91,6 +115,7 @@ class Person(private val name: String, private val age: Int) {
         const interfaceRegex = /interface\s+(\w+)(?:\s*:\s*(\w+))?(?:\s*<[^>]*>)?\s*(?:\{|$)/g; // Added generic type support
         const functionRegex = /fun\s+(\w+)\s*\(.*?\)\s*(?::\s*\w+\??)?\s*(?:\{|$)/g; // Improved to capture return types and handle spaces
         const propertyRegex = /(?:val|var)\s+(\w+)\s*:\s*(\w+\??(?:<[^>]*>)?)/g; // Captures properties with types
+        const enumRegex = /enum\s+class\s+(\w+)\s*(?:\{|$)/g; // Captures enum classes
 
         const elements = new Map(); // To store class/interface details
         const relationships = [];
@@ -105,7 +130,7 @@ class Person(private val name: String, private val age: Int) {
             }
             functionRegex.lastIndex = 0; // Reset regex
             while ((memberMatch = propertyRegex.exec(contentBlock)) !== null) {
-                members.push(`+${memberMatch[1]} : ${memberMatch[2].replace(/[<>]/g, '#lt;/#gt;')}`); // Escape <> for Mermaid
+                members.push(`+${memberMatch[1]} : ${memberMatch[2].replace(/[<>]/g, '&lt;&gt;')}`); // Escape <> for Mermaid
             }
             propertyRegex.lastIndex = 0; // Reset regex
             return members;
@@ -154,16 +179,39 @@ class Person(private val name: String, private val age: Int) {
         }
         interfaceRegex.lastIndex = 0;
 
+        // Process enums
+        while ((match = enumRegex.exec(codeContent)) !== null) {
+            const enumName = match[1];
+            elements.set(enumName, { type: 'ENUM', name: enumName, members: [] });
+        }
+
+        // Generate the Mermaid class diagram
         let graph = 'classDiagram\n';
+
+        // Apply dark theme and styling options to make diagram look better on dark backgrounds
+        graph += '  %% Class diagram styling\n';
+        graph += '  classDef default fill:#2a2a3f,stroke:#6272a4,stroke-width:1px,color:#f8f8f2,font-family:monospace\n';
+        graph += '  classDef interface fill:#1e1e2e,stroke:#9580ff,stroke-width:1px,color:#f8f8f2,font-family:monospace\n';
+        graph += '  classDef enum fill:#2c233b,stroke:#b679ff,stroke-width:1px,color:#f8f8f2,font-family:monospace\n\n';
+
         elements.forEach(el => {
             graph += `  class ${el.name} {\n`;
             if (el.type === 'INTERFACE') {
                 graph += `    <<Interface>>\n`;
+            } else if (el.type === 'ENUM') {
+                graph += `    <<Enum>>\n`;
             }
             el.members.forEach(member => {
-                graph += `    ${el.name} : ${member}\n`;
+                graph += `    ${member}\n`;
             });
-            graph += `  }\n`;
+            graph += '  }\n';
+
+            // Add styling class
+            if (el.type === 'INTERFACE') {
+                graph += `  class ${el.name} :::interface\n`;
+            } else if (el.type === 'ENUM') {
+                graph += `  class ${el.name} :::enum\n`;
+            }
         });
 
         relationships.forEach(rel => {
@@ -175,7 +223,7 @@ class Person(private val name: String, private val age: Int) {
 
     useEffect(() => {
         if (code.trim() === '') {
-            setMermaidGraphText('classDiagram\n  Empty["Type some Kotlin code to see the diagram"]');
+            setMermaidGraphText('classDiagram\n  Empty["Type some Kotlin code to see the diagram"]\n  classDef default fill:#2a2a3f,stroke:#6272a4,stroke-width:1px,color:#f8f8f2');
             return;
         }
 
@@ -217,7 +265,7 @@ class Person(private val name: String, private val age: Int) {
             //
             // const userProjects = await CodeProject.list("-lastUpdated");
             // setProjects(userProjects);
-            // setSaveDialogOpen(false);
+            setSaveDialogOpen(false);
         } catch (error) {
             console.error("Failed to save project", error);
             setError("Failed to save project. Please try again.");
@@ -251,10 +299,10 @@ class Person(private val name: String, private val age: Int) {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-slate-900 text-slate-100">
-            <header className="sticky top-0 z-10 bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between shadow-md">
+        <div className="flex flex-col h-screen bg-[#0f1117] text-slate-100">
+            <header className="sticky top-0 z-10 bg-[#1a1c25] border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-md">
                 <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-sky-400 mr-2"><path d="M10 20.5c.7-.1 1.4-.3 2-.5l8-4.4c.5-.2.8-.8.8-1.3v-3.8c0-.6-.3-1.1-.8-1.3l-8-4.4c-.7-.3-1.3-.3-2-.1C9.3 5.2 8.7 5 8 5c-1.7 0-3 1.3-3 3v8c0 1.7 1.3 3 3 3 .7 0 1.3-.2 1.8-.5H10Z"/><path d="M10 5.5c.7.1 1.4.3 2 .5l8 4.4c.5.2.8.8.8 1.3v3.8c0 .6-.3-1.1-.8-1.3l-8 4.4c-.7.3-1.3.3-2 .1.5.3 1.1.5 1.8.5 1.7 0 3-1.3 3-3v-8c0-1.7-1.3-3-3-3-.7 0-1.3.2-1.8.5H10Z"/></svg>
+                    <Code className="text-sky-400 mr-2 h-6 w-6" />
                     <h1 className="text-xl font-semibold text-slate-100 mr-4">{projectTitle}</h1>
                     {isProcessing && (
                         <div className="flex items-center text-sky-400">
@@ -266,18 +314,19 @@ class Person(private val name: String, private val age: Int) {
 
                 <div className="flex items-center space-x-2">
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={startNewProject}
-                        className="bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-200"
+                        className="bg-[#2d303e] hover:bg-[#3a3e52] text-slate-200"
                     >
+                        <PlusCircle className="h-4 w-4 mr-1" />
                         New
                     </Button>
                     <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setLoadDialogOpen(true)}
-                        className="bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-200"
+                        className="bg-[#2d303e] hover:bg-[#3a3e52] text-slate-200"
                     >
                         <Upload className="h-4 w-4 mr-1" />
                         Load
@@ -286,7 +335,7 @@ class Person(private val name: String, private val age: Int) {
                         variant="default"
                         size="sm"
                         onClick={() => setSaveDialogOpen(true)}
-                        className="bg-sky-500 hover:bg-sky-600 text-white"
+                        className="bg-sky-600 hover:bg-sky-700 text-white"
                     >
                         <Save className="h-4 w-4 mr-1" />
                         Save
@@ -295,10 +344,10 @@ class Person(private val name: String, private val age: Int) {
             </header>
 
             <div className="flex flex-1 overflow-hidden">
-                <div className="w-1/2 border-r border-slate-700 bg-slate-800 shadow-lg">
+                <div className="w-1/2 border-r border-slate-800 bg-[#1a1c25]">
                     <CodeEditor code={code} onChange={handleCodeChange} />
                 </div>
-                <div className="w-1/2 bg-slate-800 p-4 overflow-auto shadow-lg">
+                <div className="w-1/2 bg-[#1a1c25] p-4 overflow-auto">
                     <GraphViewer
                         mermaidGraphText={mermaidGraphText}
                         isProcessing={isProcessing}
@@ -308,7 +357,7 @@ class Person(private val name: String, private val age: Int) {
             </div>
 
             <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-                <DialogContent className="bg-slate-800 border-slate-700 text-slate-100">
+                <DialogContent className="bg-[#1a1c25] border-slate-700 text-slate-100">
                     <DialogHeader>
                         <DialogTitle>Save Project</DialogTitle>
                         <DialogDescription className="text-slate-400">
@@ -319,13 +368,13 @@ class Person(private val name: String, private val age: Int) {
                         value={projectTitle}
                         onChange={(e) => setProjectTitle(e.target.value)}
                         placeholder="Project name"
-                        className="mt-2 bg-slate-700 border-slate-600 text-slate-100 focus:ring-sky-500"
+                        className="mt-2 bg-[#2d303e] border-slate-600 text-slate-100 focus:ring-sky-500"
                     />
                     <DialogFooter className="mt-4">
-                        <Button variant="outline" onClick={() => setSaveDialogOpen(false)} className="bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-200">
+                        <Button variant="outline" onClick={() => setSaveDialogOpen(false)} className="bg-[#2d303e] hover:bg-[#3a3e52] border-slate-600 text-slate-200">
                             Cancel
                         </Button>
-                        <Button onClick={saveProject} disabled={isProcessing} className="bg-sky-500 hover:bg-sky-600 text-white">
+                        <Button onClick={saveProject} disabled={isProcessing} className="bg-sky-600 hover:bg-sky-700 text-white">
                             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                             Save Project
                         </Button>
@@ -334,7 +383,7 @@ class Person(private val name: String, private val age: Int) {
             </Dialog>
 
             <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
-                <DialogContent className="bg-slate-800 border-slate-700 text-slate-100">
+                <DialogContent className="bg-[#1a1c25] border-slate-700 text-slate-100">
                     <DialogHeader>
                         <DialogTitle>Load Project</DialogTitle>
                         <DialogDescription className="text-slate-400">
@@ -346,7 +395,7 @@ class Person(private val name: String, private val age: Int) {
                             projects.map(project => (
                                 <div
                                     key={project.id}
-                                    className="p-3 border border-slate-700 rounded-md hover:bg-slate-700 cursor-pointer transition-colors"
+                                    className="p-3 border border-slate-700 rounded-md hover:bg-[#2d303e] cursor-pointer transition-colors"
                                     onClick={() => loadProject(project.id)}
                                 >
                                     <div className="font-medium text-sky-400">{project.title}</div>
@@ -362,7 +411,7 @@ class Person(private val name: String, private val age: Int) {
                         )}
                     </div>
                     <DialogFooter className="mt-4">
-                        <Button variant="outline" onClick={() => setLoadDialogOpen(false)} className="bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-200">
+                        <Button variant="outline" onClick={() => setLoadDialogOpen(false)} className="bg-[#2d303e] hover:bg-[#3a3e52] border-slate-600 text-slate-200">
                             Cancel
                         </Button>
                     </DialogFooter>
