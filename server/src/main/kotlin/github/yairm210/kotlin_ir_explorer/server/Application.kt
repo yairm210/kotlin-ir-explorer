@@ -7,6 +7,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
@@ -30,12 +31,14 @@ fun Application.module() {
 @OptIn(UnsafeDuringIrConstructionAPI::class)
 fun Application.configureRouting() {
     routing {
-        get("/api/kotlinToMermaid/{kotlinCode}") {
-            // get 'kotlin parameter
-            val kotlinCode = call.parameters["kotlinCode"] ?: return@get call.respondText(
-                "Missing or malformed 'kotlin' parameter",
-                status = HttpStatusCode.BadRequest
-            )
+        post("/api/kotlinToMermaid") {
+            // get body as code
+            
+            val kotlinCode = call.receiveText()
+//            val kotlinCode = call.response ?: return@get call.respondText(
+//                "Missing or malformed 'kotlin' parameter",
+//                status = HttpStatusCode.BadRequest
+//            )
 
             val compilationResult = getCompilationResult(kotlinCode)
             

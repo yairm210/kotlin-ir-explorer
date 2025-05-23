@@ -2,7 +2,22 @@
 
 ![Example mermaid graph](docs/mermaid-graph-example.png)
 
-This is a simple tool to visualize the Kotlin IR (Intermediate Representation) of a Kotlin program as a Mermaid graph.
+Visualize Kotlin IR (Intermediate Representation) as a Mermaid graph.
+
+## What?
+
+Kotlin compilation is a multi-step process that converts Kotlin code to an intermediate representation (IR) before generating bytecode.
+
+Usually, the final generated results are available for examination, but the intermediate code is not available to the developer. No longer! :D
+
+```mermaid
+graph TD
+    Code[Kotlin code] --> IR[IR - Intermediate Representation]
+    IR --> JvmBytecode[Jvm Bytecode]
+    IR --> JsBytecode[Js Bytecode]
+    IR --> NativeBytecode[Native Bytecode]
+    IR --> WasmBytecode[Wasm Bytecode]
+```
 
 ## Development
 
@@ -19,6 +34,8 @@ cd server/src/main/resources/static
 npm install
 npm run build
 ```
+
+You can also develop just the static site using `npm run start` for hot reloading.
 
 To run the server:
 

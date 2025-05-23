@@ -13,56 +13,22 @@ import {
     DialogFooter,
     DialogDescription
 } from "@/components/ui/dialog";
+import axios from "axios";
 
 // Mock API URL - Replace with your actual backend endpoint for generating Mermaid text
-// const API_URL = "https://your-backend-api.com/generate-mermaid";
+const API_URL = "https://your-backend-api.com/generate-mermaid";
 
 export default function CodeVisualizerPage() {
     // Initial example Kotlin code
     const [code, setCode] = useState(`// Example Kotlin code
 fun main() {
-    val greeting = "Hello, Kotlin!"
-    println(greeting)
-    
-    val person = Person("John", 30)
-    println(person.introduce())
-}
-
-// Person class represents a person with name and age
-class Person(private val name: String, private val age: Int) {
-    fun introduce(): String {
-        return "I'm $name, $age years old."
-    }
-    
-    fun celebrate() {
-        println("$name is celebrating their birthday!")
-    }
-}
-
-// Interface example
-interface Drawable {
-    fun draw()
-    fun resize(factor: Double)
-}
-
-// Class implementing interface
-class Circle(private var radius: Double) : Drawable {
-    override fun draw() {
-        println("Drawing circle with radius $radius")
-    }
-    
-    override fun resize(factor: Double) {
-        radius *= factor
-    }
-}
-
-// Data class example
-data class Point(val x: Int, val y: Int)
-
-// Enum example
-enum class Direction {
-    NORTH, SOUTH, EAST, WEST
-}`);
+            var x = 5
+            if (x > 1 + 2) {
+                x += 1
+                listOf(1, 2)
+            }
+        }
+        `);
 
     const [mermaidGraphText, setMermaidGraphText] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -94,13 +60,13 @@ enum class Direction {
         try {
             // In a real implementation, you'd send `codeToProcess` to your backend
             // which would return the Mermaid graph *text representation*.
-            // e.g., const response = await axios.post(API_URL, { code: codeToProcess });
-            // const graphText = response.data.mermaidText; 
+            const response = await axios.post("/api/kotlinToMermaid", codeToProcess);
+            const graphText = response.data.mermaidGraph; 
 
             // Placeholder implementation (simulating API response):
-            await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+            // await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
 
-            let graphText = generatePlaceholderGraph(codeToProcess);
+            // let graphText = generatePlaceholderGraph(codeToProcess);
             setMermaidGraphText(graphText);
         } catch (err) {
             console.error("Error processing code:", err);
