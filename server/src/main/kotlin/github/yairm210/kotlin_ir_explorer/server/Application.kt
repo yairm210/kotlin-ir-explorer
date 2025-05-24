@@ -2,7 +2,6 @@ package github.yairm210.kotlin_ir_explorer.server
 
 import getCompilationResult
 import github.yairm210.kotlin_ir_explorer.core.IrMermaidGraphConverter
-import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
@@ -10,6 +9,8 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.plugins.cors.routing.CORS
+
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.dump
@@ -20,7 +21,9 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     configureRouting()
-
+    install(CORS){
+        anyHost()
+    }
 
     install(ContentNegotiation) {
         json()

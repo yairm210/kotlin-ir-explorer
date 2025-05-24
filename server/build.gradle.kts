@@ -25,7 +25,9 @@ dependencies {
     implementation("io.ktor:ktor-server-compression:$ktorVersion")
     implementation("io.ktor:ktor-server-host-common:$ktorVersion")
     implementation("io.ktor:ktor-server-config-yaml:$ktorVersion")
-    implementation("ch.qos.logback:logback-classic:1.4.5")
+    implementation("ch.qos.logback:logback-classic:1.5.13")
+        // allow cors
+    implementation("io.ktor:ktor-server-cors:$ktorVersion")
     
     
     //testing
