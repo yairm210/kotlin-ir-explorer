@@ -25,31 +25,15 @@ mermaid.initialize(
     }
 )
 
-function Mermaid({ graphText }) {
-    const [svg, setSvg] = useState(null);
-    useEffect(()=> { // Applies after loading
-        const render = async () => {
-            const {svg} = await mermaid.render("fake", graphText) // There may be a nicer way to wrap this
-            setSvg(svg)
-        }
-        render().catch(console.error)
-    }, []);
-    return <div className="h-full w-full flex" dangerouslySetInnerHTML={{__html: svg}}></div>;
-}
-
 export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
     const containerRef = useRef(null);
     const [rendering, setRendering] = useState(false);
     const [renderError, setRenderError] = useState(null);
+    const [svg, setSvg] = useState(null);
 
     // Render graph when text or library readiness changes
     useEffect(() => {
-        if (!mermaidGraphText || !containerRef.current || isProcessing) {
-            if (!mermaidGraphText && containerRef.current) {
-                containerRef.current.innerHTML = ''; // Clear if no text
-            }
-            return;
-        }
+        if (!mermaidGraphText || isProcessing) return
 
         setRendering(true);
         setRenderError(null);
@@ -66,6 +50,7 @@ export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
                         }
                     }
                     setRendering(false);
+                    setSvg(svg);
                 })
                 .catch(err => {
                     console.error("Mermaid rendering error:", err);
@@ -127,14 +112,16 @@ export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
     } else {
         // The div will be populated by the useEffect hook
         content = (
-            <div ref={containerRef} className="w-full h-full flex justify-center items-center overflow-auto p-2 mermaid-live-container">
-                <Mermaid graphText={mermaidGraphText} />
+            <div //ref={containerRef}
+                 dangerouslySetInnerHTML={{__html: svg}}
+                 className="w-full h-full flex justify-center items-center overflow-auto p-2 mermaid-live-container">
             </div>
         );
     }
 
     return (
-        <div className="h-full w-full bg-[#0f1117] rounded-lg border border-slate-800 flex justify-center items-center overflow-hidden">
+        <div
+            className="h-full w-full bg-[#0f1117] rounded-lg border border-slate-800 flex justify-center items-center overflow-hidden">
             {content}
         </div>
     );
