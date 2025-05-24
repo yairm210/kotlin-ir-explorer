@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import { Loader2, AlertTriangle, ImageOff } from 'lucide-react';
 import mermaid from 'mermaid';
+import svgPanZoom from 'svg-pan-zoom';
 
 mermaid.initialize(
     {
@@ -26,27 +27,28 @@ mermaid.initialize(
 )
 
 export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
-    const containerRef = useRef(null);
+    const svgContainerRef = useRef(null);
     const [rendering, setRendering] = useState(false);
     const [renderError, setRenderError] = useState(null);
     const [svg, setSvg] = useState(null);
 
+    const graphId = `mermaid-graph-${Date.now()}`;
+    
     // Render graph when text or library readiness changes
     useEffect(() => {
         if (!mermaidGraphText || isProcessing) return
 
         setRendering(true);
         setRenderError(null);
-        const graphId = `mermaid-graph-${Date.now()}`;
 
         try {
             // mermaid.render() returns a promise with the SVG
             mermaid.render(graphId, mermaidGraphText)
                 .then(({ svg, bindFunctions }) => {
-                    if (containerRef.current) {
-                        containerRef.current.innerHTML = svg;
+                    if (svgContainerRef.current) {
+                        svgContainerRef.current.innerHTML = svg;
                         if (bindFunctions) {
-                            bindFunctions(containerRef.current); // For interactivity if any
+                            bindFunctions(svgContainerRef.current); // For interactivity if any
                         }
                     }
                     setRendering(false);
@@ -55,22 +57,32 @@ export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
                 .catch(err => {
                     console.error("Mermaid rendering error:", err);
                     setRenderError(`Diagram error: ${err.message || 'Could not render graph.'}`);
-                    if (containerRef.current) {
-                        containerRef.current.innerHTML = `<div class="text-red-400 p-4">Error rendering diagram. Check console.</div>`;
+                    if (svgContainerRef.current) {
+                        svgContainerRef.current.innerHTML = `<div class="text-red-400 p-4">Error rendering diagram. Check console.</div>`;
                     }
                     setRendering(false);
                 });
         } catch (err) {
             console.error("Synchronous Mermaid error:", err);
             setRenderError(`Diagram error: ${err.message || 'Critical error.'}`);
-            if (containerRef.current) {
-                containerRef.current.innerHTML = `<div class="text-red-400 p-4">Critical diagram rendering error.</div>`;
+            if (svgContainerRef.current) {
+                svgContainerRef.current.innerHTML = `<div class="text-red-400 p-4">Critical diagram rendering error.</div>`;
             }
             setRendering(false);
         }
 
     }, [mermaidGraphText, isProcessing]);
 
+    useEffect(() => {
+        if (!svgContainerRef.current || !svg) return;
+        const svgElement = svgContainerRef.current.children[0];
+        // make svg size to its current size - required so it's not a tiny thing
+        svgElement.style.width = '100%';
+        svgElement.style.height = '100%';
+        svgPanZoom(svgElement, {
+            controlIconsEnabled: true
+        })
+    })
 
     let content;
 
@@ -112,7 +124,7 @@ export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
     } else {
         // The div will be populated by the useEffect hook
         content = (
-            <div //ref={containerRef}
+            <div ref={svgContainerRef}
                  dangerouslySetInnerHTML={{__html: svg}}
                  className="w-full h-full flex justify-center items-center overflow-auto p-2 mermaid-live-container">
             </div>

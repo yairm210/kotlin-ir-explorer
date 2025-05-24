@@ -20,6 +20,7 @@
     "mermaid": "^11.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "svg-pan-zoom": "^3.6.2",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.7"
   },
