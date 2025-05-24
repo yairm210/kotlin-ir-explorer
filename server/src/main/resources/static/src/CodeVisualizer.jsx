@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 // import { CodeProject } from "@/entities/CodeProject";
 import CodeEditor from "./CodeEditor";
 import GraphViewer from "./GraphViewer";
-import { Loader2, Save, Download, Upload, Code, PlusCircle } from "lucide-react";
+import { Loader2, Save, Upload, Code, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,8 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import axios from "axios";
 
-// Mock API URL - Replace with your actual backend endpoint for generating Mermaid text
-const API_URL = "https://your-backend-api.com/generate-mermaid";
 
 export default function CodeVisualizerPage() {
     // Initial example Kotlin code
@@ -75,118 +73,6 @@ fun main() {
             setIsProcessing(false);
         }
     };
-
-    const generatePlaceholderGraph = (codeContent) => {
-        const classRegex = /class\s+(\w+)(?:\s*:\s*(\w+))?(?:\s*<[^>]*>)?\s*(?:\{|$)/g; // Added generic type support
-        const interfaceRegex = /interface\s+(\w+)(?:\s*:\s*(\w+))?(?:\s*<[^>]*>)?\s*(?:\{|$)/g; // Added generic type support
-        const functionRegex = /fun\s+(\w+)\s*\(.*?\)\s*(?::\s*\w+\??)?\s*(?:\{|$)/g; // Improved to capture return types and handle spaces
-        const propertyRegex = /(?:val|var)\s+(\w+)\s*:\s*(\w+\??(?:<[^>]*>)?)/g; // Captures properties with types
-        const enumRegex = /enum\s+class\s+(\w+)\s*(?:\{|$)/g; // Captures enum classes
-
-        const elements = new Map(); // To store class/interface details
-        const relationships = [];
-
-        let match;
-
-        const extractMembers = (elementName, contentBlock) => {
-            const members = [];
-            let memberMatch;
-            while ((memberMatch = functionRegex.exec(contentBlock)) !== null) {
-                members.push(`+${memberMatch[1]}()`);
-            }
-            functionRegex.lastIndex = 0; // Reset regex
-            while ((memberMatch = propertyRegex.exec(contentBlock)) !== null) {
-                members.push(`+${memberMatch[1]} : ${memberMatch[2].replace(/[<>]/g, '&lt;&gt;')}`); // Escape <> for Mermaid
-            }
-            propertyRegex.lastIndex = 0; // Reset regex
-            return members;
-        };
-
-        const findBlockEnd = (startIndex) => {
-            let openBraces = 0;
-            for (let i = startIndex; i < codeContent.length; i++) {
-                if (codeContent[i] === '{') {
-                    openBraces++;
-                } else if (codeContent[i] === '}') {
-                    openBraces--;
-                    if (openBraces === 0) return i;
-                }
-            }
-            return codeContent.length -1; // Fallback
-        };
-
-
-        while ((match = classRegex.exec(codeContent)) !== null) {
-            const className = match[1];
-            const startIdx = match.index;
-            const blockStartIdx = codeContent.indexOf('{', startIdx);
-            const blockEndIdx = blockStartIdx !== -1 ? findBlockEnd(blockStartIdx) : startIdx + match[0].length;
-            const classBlock = codeContent.substring(blockStartIdx + 1, blockEndIdx);
-
-            elements.set(className, { type: 'CLASS', name: className, members: extractMembers(className, classBlock) });
-            if (match[2]) { // Inheritance
-                relationships.push(`${match[2]} <|-- ${className}`);
-            }
-        }
-        classRegex.lastIndex = 0;
-
-
-        while ((match = interfaceRegex.exec(codeContent)) !== null) {
-            const interfaceName = match[1];
-            const startIdx = match.index;
-            const blockStartIdx = codeContent.indexOf('{', startIdx);
-            const blockEndIdx = blockStartIdx !== -1 ? findBlockEnd(blockStartIdx) : startIdx + match[0].length;
-            const interfaceBlock = codeContent.substring(blockStartIdx + 1, blockEndIdx);
-
-            elements.set(interfaceName, { type: 'INTERFACE', name: interfaceName, members: extractMembers(interfaceName, interfaceBlock) });
-            if (match[2]) { // Inheritance
-                relationships.push(`${match[2]} <|-- ${interfaceName}`);
-            }
-        }
-        interfaceRegex.lastIndex = 0;
-
-        // Process enums
-        while ((match = enumRegex.exec(codeContent)) !== null) {
-            const enumName = match[1];
-            elements.set(enumName, { type: 'ENUM', name: enumName, members: [] });
-        }
-
-        // Generate the Mermaid class diagram
-        let graph = 'classDiagram\n';
-
-        // Apply dark theme and styling options to make diagram look better on dark backgrounds
-        graph += '  %% Class diagram styling\n';
-        graph += '  classDef default fill:#2a2a3f,stroke:#6272a4,stroke-width:1px,color:#f8f8f2,font-family:monospace\n';
-        graph += '  classDef interface fill:#1e1e2e,stroke:#9580ff,stroke-width:1px,color:#f8f8f2,font-family:monospace\n';
-        graph += '  classDef enum fill:#2c233b,stroke:#b679ff,stroke-width:1px,color:#f8f8f2,font-family:monospace\n\n';
-
-        elements.forEach(el => {
-            graph += `  class ${el.name} {\n`;
-            if (el.type === 'INTERFACE') {
-                graph += `    <<Interface>>\n`;
-            } else if (el.type === 'ENUM') {
-                graph += `    <<Enum>>\n`;
-            }
-            el.members.forEach(member => {
-                graph += `    ${member}\n`;
-            });
-            graph += '  }\n';
-
-            // Add styling class
-            if (el.type === 'INTERFACE') {
-                graph += `  class ${el.name} :::interface\n`;
-            } else if (el.type === 'ENUM') {
-                graph += `  class ${el.name} :::enum\n`;
-            }
-        });
-
-        relationships.forEach(rel => {
-            graph += `  ${rel}\n`;
-        });
-
-        return graph || 'classDiagram\n  EmptyDiagram["No classes or interfaces found"]';
-    };
-
     useEffect(() => {
         if (code.trim() === '') {
             setMermaidGraphText('classDiagram\n  Empty["Type some Kotlin code to see the diagram"]\n  classDef default fill:#2a2a3f,stroke:#6272a4,stroke-width:1px,color:#f8f8f2');
@@ -199,7 +85,7 @@ fun main() {
 
         timerRef.current = setTimeout(() => {
             processCode(code);
-        }, 3000);
+        }, 250);
 
         return () => {
             if (timerRef.current) {
