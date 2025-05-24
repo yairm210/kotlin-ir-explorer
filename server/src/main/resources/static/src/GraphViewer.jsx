@@ -1,34 +1,106 @@
-import React from 'react';
+import React, {use, useEffect, useRef, useState} from 'react';
 import { Loader2, AlertTriangle, ImageOff } from 'lucide-react';
+import mermaid from 'mermaid';
 
-// Function to encode Mermaid text for URL
-const encodeMermaid = (mermaidText) => {
-    // First, encode to Base64
-    const base64 = btoa(mermaidText);
-    // Then, make it URL-safe
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-};
+mermaid.initialize(
+    {
+        startOnLoad: false, // We will render manually
+        theme: 'dark',      // Apply dark theme globally
+        // Dark theme configuration similar to Dracula
+        themeVariables: {
+            background: '#0f1117',
+            primaryColor: '#1a1c25', // Node background
+            primaryTextColor: '#f8f8f2',
+            primaryBorderColor: '#6272a4',
+            // lineColor: '#44475a',
+            secondaryColor: '#2d303e',
+            tertiaryColor: '#2d303e',
+            fontSize: '14px',
+            fontFamily: 'JetBrains Mono, Fira Code, Menlo, Monaco, Courier New, monospace',
+
+            // Specific for class diagrams
+            classText: '#f8f8f2',
+        },
+        securityLevel: 'loose', // Allow clicks etc
+    }
+)
+
+function Mermaid({ graphText }) {
+    useEffect(()=> { // Applies after loading
+        mermaid.run() // There may be a nicer way to wrap this
+    }, []);
+    return <div className="mermaid h-full w-full flex">{graphText}</div>;
+}
 
 export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
+    const containerRef = useRef(null);
+    const [rendering, setRendering] = useState(false);
+    const [renderError, setRenderError] = useState(null);
+
+    // Render graph when text or library readiness changes
+    useEffect(() => {
+        if (!mermaidGraphText || !containerRef.current || isProcessing) {
+            if (!mermaidGraphText && containerRef.current) {
+                containerRef.current.innerHTML = ''; // Clear if no text
+            }
+            return;
+        }
+
+        setRendering(true);
+        setRenderError(null);
+        const graphId = `mermaid-graph-${Date.now()}`;
+
+        try {
+            // mermaid.render() returns a promise with the SVG
+            mermaid.render(graphId, mermaidGraphText)
+                .then(({ svg, bindFunctions }) => {
+                    if (containerRef.current) {
+                        containerRef.current.innerHTML = svg;
+                        if (bindFunctions) {
+                            bindFunctions(containerRef.current); // For interactivity if any
+                        }
+                    }
+                    setRendering(false);
+                })
+                .catch(err => {
+                    console.error("Mermaid rendering error:", err);
+                    setRenderError(`Diagram error: ${err.message || 'Could not render graph.'}`);
+                    if (containerRef.current) {
+                        containerRef.current.innerHTML = `<div class="text-red-400 p-4">Error rendering diagram. Check console.</div>`;
+                    }
+                    setRendering(false);
+                });
+        } catch (err) {
+            console.error("Synchronous Mermaid error:", err);
+            setRenderError(`Diagram error: ${err.message || 'Critical error.'}`);
+            if (containerRef.current) {
+                containerRef.current.innerHTML = `<div class="text-red-400 p-4">Critical diagram rendering error.</div>`;
+            }
+            setRendering(false);
+        }
+
+    }, [mermaidGraphText, isProcessing]);
+
+
     let content;
 
-    if (isProcessing) {
+    if (isProcessing || rendering) {
         content = (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <Loader2 className="h-12 w-12 animate-spin mb-4 text-sky-400" />
-                <p>Generating Diagram...</p>
-                <p className="text-sm text-slate-500 mt-2">This may take a moment.</p>
+                <p>{isProcessing ? "Processing Code..." : "Rendering Diagram..."}</p>
             </div>
         );
-    } else if (error) {
+    } else if (error || renderError) {
         content = (
             <div className="h-full flex flex-col items-center justify-center text-red-400">
                 <AlertTriangle className="h-12 w-12 mb-4" />
-                <p className="font-semibold">Error Generating Diagram</p>
-                <p className="text-sm text-red-500 mt-1">{error}</p>
+                <p className="font-semibold">Error</p>
+                <p className="text-sm text-red-500 mt-1">{error || renderError}</p>
             </div>
         );
-    } else if (!mermaidGraphText || mermaidGraphText.trim() === '' || mermaidGraphText.includes("EmptyDiagram") || mermaidGraphText.includes("Empty[")) {
+    } else if (!mermaidGraphText || mermaidGraphText.trim() === '') {
+        // This condition checks for specific placeholder texts in the mermaid string
         content = (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <ImageOff className="h-16 w-16 mb-4 text-slate-500" />
@@ -48,22 +120,10 @@ export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
             </div>
         );
     } else {
-        // Construct URL for mermaid.ink
-        const encodedGraph = encodeMermaid(mermaidGraphText);
-        const imageUrl = `https://mermaid.ink/img/${encodedGraph}?bgColor=0f1117&theme=dark`;
-
+        // The div will be populated by the useEffect hook
         content = (
-            <div className="p-2 flex justify-center items-center h-full w-full">
-                <img
-                    src={imageUrl}
-                    alt="Mermaid Diagram"
-                    className="max-w-full max-h-full object-contain rounded-md shadow-lg"
-                    onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%236272a4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E";
-                        console.error("Failed to load graph image");
-                    }}
-                />
+            <div ref={containerRef} className="w-full h-full flex justify-center items-center overflow-auto p-2 mermaid-live-container">
+                <Mermaid graphText={mermaidGraphText} />
             </div>
         );
     }
