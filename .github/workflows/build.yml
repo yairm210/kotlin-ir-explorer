@@ -29,12 +29,19 @@ jobs:
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+      with:
+        cache: 'gradle' # This caches the Gradle dependencies to speed up builds
 
     - name: Build with Gradle
       run: ./gradlew build
 
+    - uses: actions/setup-node@v4
+      with:
+          node-version: '18'
+          cache: 'npm'
+          
     - name: Build static site
       run: |
         cd server/src/main/resources/static
-        npm install
+        npm ci
         npm run build

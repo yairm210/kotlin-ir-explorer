@@ -34,6 +34,9 @@ fun Application.module() {
 @OptIn(UnsafeDuringIrConstructionAPI::class)
 fun Application.configureRouting() {
     routing {
+        get("/api/isalive") {
+            call.respondText("OK")
+        }
         post("/api/kotlinToMermaid") {
             // get body as code
             
