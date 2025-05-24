@@ -1,4 +1,4 @@
-import React, {use, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { Loader2, AlertTriangle, ImageOff } from 'lucide-react';
 import mermaid from 'mermaid';
 
@@ -26,10 +26,15 @@ mermaid.initialize(
 )
 
 function Mermaid({ graphText }) {
+    const [svg, setSvg] = useState(null);
     useEffect(()=> { // Applies after loading
-        mermaid.run() // There may be a nicer way to wrap this
+        const render = async () => {
+            const {svg} = await mermaid.render("fake", graphText) // There may be a nicer way to wrap this
+            setSvg(svg)
+        }
+        render().catch(console.error)
     }, []);
-    return <div className="mermaid h-full w-full flex">{graphText}</div>;
+    return <div className="h-full w-full flex" dangerouslySetInnerHTML={{__html: svg}}></div>;
 }
 
 export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
