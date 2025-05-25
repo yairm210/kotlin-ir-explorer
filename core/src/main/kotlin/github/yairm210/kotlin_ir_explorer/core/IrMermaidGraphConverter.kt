@@ -27,9 +27,6 @@ class IrMermaidGraphListener:IrElementVisitor<Unit, Triple<IrElement?, StringBui
         stringbuilder.append("  ".repeat(depth))
         // Need to escape the rendered string to avoid issues with mermaid
 
-        if (element is IrFunction) {
-            stringbuilder.appendLine("subgraph ${element.name}")
-        }
         
         stringbuilder.appendLine("${element.hashCode()}[\"${element.render()}\"]")
         
@@ -38,6 +35,13 @@ class IrMermaidGraphListener:IrElementVisitor<Unit, Triple<IrElement?, StringBui
             stringbuilder.append("  ".repeat(depth))
             stringbuilder.appendLine("${parent.hashCode()} --> ${element.hashCode()}")
         }
+        listOf(1,2).max()
+
+        // The subgraph should not hold the block body containing the function declaration, hence it can't be at the top of this function
+        if (element is IrFunction) {
+            stringbuilder.appendLine("subgraph ${element.name}")
+        }
+        
         // User-visible text is just the classname for now
         element.acceptChildren(this, Triple(element, stringbuilder, depth + 1))
 
