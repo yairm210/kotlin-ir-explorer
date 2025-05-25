@@ -44,3 +44,9 @@ jobs:
         cd server/src/main/resources/static
         npm ci
         npm run build
+        
+    # Build dockerfile
+    - name: Build Docker image
+      run: |
+        docker build -t yairm210/kotlin-ir-explorer:latest .
+        echo "Docker image built successfully."
