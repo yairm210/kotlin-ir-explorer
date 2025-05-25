@@ -4,6 +4,7 @@ import GraphViewer from "./GraphViewer";
 import { Loader2 } from "lucide-react";
 import KotlinLogo from './KotlinLogo.svg';
 import axios from "axios";
+import {editor} from "monaco-editor";
 
 
 export default function CodeVisualizerPage() {
@@ -69,6 +70,21 @@ fun main() {
     const handleCodeChange = (newCode) => {
         setCode(newCode);
     };
+    
+    const onWarningLocationClick = (location) => {
+        if (!location) return;
+
+        // Use Monaco editor's API to reveal the line
+        const lineNumber = location.line
+        const columnNumber = location.column
+
+        const editorInstance = editor.getEditors()[0]; // Assuming there's only one editor instance
+        if (editorInstance) {
+            editorInstance.revealLineInCenter(lineNumber);
+            editorInstance.setPosition({ lineNumber, column: columnNumber });
+            editorInstance.focus();
+        }
+    }
 
     return (
         <div className="flex flex-col h-screen bg-[#0f1117] text-slate-100">
@@ -98,6 +114,7 @@ fun main() {
                         compilerMessages={compilerMessages}
                         isProcessing={isProcessing}
                         error={error}
+                        onWarningLocationClick={onWarningLocationClick}
                     />
                 </div>
             </div>

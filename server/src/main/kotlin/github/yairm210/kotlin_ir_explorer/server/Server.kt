@@ -48,11 +48,25 @@ fun Application.configureRouting() {
 //            )
 
             val compilationResult = getCompilationResult(kotlinCode)
+
+
+            @Serializable
+            class CompilerMessageLocation(
+                val line: Int,
+                val column: Int
+            )
+            
+            @Serializable
+            class CompilerMessage(
+                val severity: String,
+                val message: String,
+                val location: CompilerMessageLocation?
+            )
             
             @Serializable
             class Response(
                 val mermaidGraph: String?,
-                val messages: List<String>
+                val messages: List<CompilerMessage>
             )
             
             val mermaidGraph = if (compilationResult.irModuleFragment == null) null
@@ -70,7 +84,15 @@ fun Application.configureRouting() {
 
             val renderedMessages = compilationResult.messages
                 .filter { it.severity.isError || it.severity.isWarning }
-                .map { "${it.severity}: ${it.message} ${it.location?.let { "${it.line}:${it.column}" }}" }
+                .map {
+                    CompilerMessage(
+                        severity = it.severity.presentableName,
+                        message = it.message,
+                        location = it.location?.let { loc ->
+                            CompilerMessageLocation(loc.line, loc.column)
+                        }
+                    )
+                }
             
             val response = Response(
                 mermaidGraph,
