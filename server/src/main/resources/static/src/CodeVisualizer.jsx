@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import CodeEditor from "./CodeEditor";
 import GraphViewer from "./GraphViewer";
-import { Loader2, Code } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import KotlinLogo from './KotlinLogo.svg';
 import axios from "axios";
 
@@ -19,6 +19,7 @@ fun main() {
 `);
 
     const [mermaidGraphText, setMermaidGraphText] = useState("");
+    const [compilerMessages, setCompilerMessages] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
     const timerRef = useRef(null);
@@ -32,7 +33,9 @@ fun main() {
             // which would return the Mermaid graph *text representation*.
             const response = await axios.post("/api/kotlinToMermaid", codeToProcess)
             const graphText = response.data.mermaidGraph
+            const messages = response.data.messages 
             setMermaidGraphText(graphText)
+            setCompilerMessages(messages)
         } catch (err) {
             console.error("Error processing code:", err)
             setError("Failed to generate graph. Please ensure your backend is running or check the placeholder logic.")
@@ -92,6 +95,7 @@ fun main() {
                 <div className="w-1/2 bg-[#1a1c25] p-4 overflow-auto">
                     <GraphViewer
                         mermaidGraphText={mermaidGraphText}
+                        compilerMessages={compilerMessages}
                         isProcessing={isProcessing}
                         error={error}
                     />
