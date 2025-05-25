@@ -4,11 +4,15 @@
 
 Visualize Kotlin IR (Intermediate Representation) as a Mermaid graph.
 
+## How?
+
+Run `docker run -p 8080:8080 yairm210/kotlin-ir-explorer` to start the server, and then open your browser at [http://localhost:8080](http://localhost:8080).
+
 ## What?
 
 Kotlin compilation is a multi-step process that converts Kotlin code to an intermediate representation (IR) before generating bytecode.
 
-Usually, the final generated results are available for examination, but the intermediate code is not available to the developer. No longer! :D
+Usually, the final generated results are available for examination, but the **intermediate code** is not available to the developer. No longer! :D
 
 ```mermaid
 graph TD
