@@ -55,13 +55,8 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
     
-    - name: Build Docker images
+    - name: Build and push Docker images
       run: |
-        docker buildx build --platform linux/amd64,linux/arm64 -t yairm210/kotlin-ir-explorer:latest .
-        echo "Docker image built successfully."
-        
-    - name: Push Docker image
-      run: |
-          echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push yairm210/kotlin-ir-explorer:latest
-          echo "Docker image pushed successfully."
+        echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        docker buildx build --platform linux/amd64,linux/arm64 -t yairm210/kotlin-ir-explorer:latest . --push
+        echo "Docker images built and pushed successfully."
