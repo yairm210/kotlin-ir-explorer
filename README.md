@@ -2,7 +2,7 @@
 
 ![Example mermaid graph](docs/mermaid-graph-example.png)
 
-Visualize Kotlin IR (Intermediate Representation) as a Mermaid graph.
+Visualize Kotlin IR (Intermediate Representation) as a Mermaid graph, for use in Kotlin Compiler Plugin development
 
 ## How?
 
