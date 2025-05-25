@@ -58,7 +58,7 @@ fun main() {
         try {
             // In a real implementation, you'd send `codeToProcess` to your backend
             // which would return the Mermaid graph *text representation*.
-            const response = await axios.post("http://localhost:8080/api/kotlinToMermaid", codeToProcess);
+            const response = await axios.post("/api/kotlinToMermaid", codeToProcess);
             const graphText = response.data.mermaidGraph; 
 
             // Placeholder implementation (simulating API response):
