@@ -68,7 +68,9 @@ fun Application.configureRouting() {
                     }
             }
 
-            val renderedMessages = compilationResult.messages.map { "${it.severity}: ${it.message} ${it.location?.let { "${it.line}:${it.column}" }}" }
+            val renderedMessages = compilationResult.messages
+                .filter { it.severity.isError || it.severity.isWarning }
+                .map { "${it.severity}: ${it.message} ${it.location?.let { "${it.line}:${it.column}" }}" }
             
             val response = Response(
                 mermaidGraph,

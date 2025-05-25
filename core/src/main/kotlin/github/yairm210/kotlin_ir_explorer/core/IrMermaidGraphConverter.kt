@@ -3,12 +3,10 @@ package github.yairm210.kotlin_ir_explorer.core
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 
 object IrMermaidGraphConverter {
-    @OptIn(UnsafeDuringIrConstructionAPI::class)
     fun convertToMermaidGraph(irModuleFragment: IrModuleFragment): String {
         val sb = StringBuilder()
         sb.appendLine("graph TD")

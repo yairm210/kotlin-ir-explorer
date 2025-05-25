@@ -26,7 +26,7 @@ mermaid.initialize(
     }
 )
 
-export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
+export default function GraphViewer({ mermaidGraphText, compilerMessages, isProcessing, error }) {
     const svgContainerRef = useRef(null);
     const [rendering, setRendering] = useState(false);
     const [renderError, setRenderError] = useState(null);
@@ -106,19 +106,15 @@ export default function GraphViewer({ mermaidGraphText, isProcessing, error }) {
         content = (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <ImageOff className="h-16 w-16 mb-4 text-slate-500" />
-                <h3 className="text-lg font-medium mb-2">No Diagram to Display</h3>
-                <p className="text-center max-w-sm">
-                    Start typing Kotlin code in the editor. The diagram will automatically update.
-                </p>
-                <div className="mt-4 text-sm bg-[#2d303e] p-3 rounded-md text-left max-w-md w-full">
-                    <p className="font-medium text-slate-300">Try a simple class:</p>
-                    <pre className="mt-2 overflow-x-auto text-xs bg-[#0f1117] p-2 rounded-md text-sky-300">
-{`class Example {
-  val id: Int
-  fun greet(): String
-}`}
-            </pre>
-                </div>
+                {/*<h3 className="text-lg font-medium mb-2">No Diagram to Display</h3>*/}
+                {compilerMessages.map(message => 
+                    <div className="mt-4 text-sm bg-[#2d303e] p-3 rounded-md text-left max-w w-full">
+                        {/*<p className="font-medium text-slate-300">Try a simple class:</p>*/}
+                        <pre className="mt-2 overflow-x-auto text-xs bg-[#0f1117] p-2 rounded-md text-sky-300">
+                            {message}
+                        </pre>
+                    </div>
+                )}
             </div>
         );
     } else {
