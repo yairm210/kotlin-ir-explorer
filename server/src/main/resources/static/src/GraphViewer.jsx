@@ -26,7 +26,8 @@ mermaid.initialize(
     }
 )
 
-export default function GraphViewer({ mermaidGraphText, compilerMessages, isProcessing, error }) {
+export default function GraphViewer({ mermaidGraphText, compilerMessages, isProcessing,
+                                        error, onWarningLocationClick }) {
     const svgContainerRef = useRef(null);
     const [rendering, setRendering] = useState(false);
     const [renderError, setRenderError] = useState(null);
@@ -106,12 +107,17 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
         content = (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <ImageOff className="h-16 w-16 mb-4 text-slate-500" />
-                {/*<h3 className="text-lg font-medium mb-2">No Diagram to Display</h3>*/}
                 {compilerMessages.map(message => 
-                    <div className="mt-4 text-sm bg-[#2d303e] p-3 rounded-md text-left max-w w-full">
+                    <div className="mt-4 text-sm bg-[#2d303e] p-3 rounded-md text-left max-w w-full"
+                         style={{cursor: 'pointer'}} // as 
+                         onClick={() => onWarningLocationClick(message.location)}>
                         {/*<p className="font-medium text-slate-300">Try a simple class:</p>*/}
                         <pre className="mt-2 overflow-x-auto text-xs bg-[#0f1117] p-2 rounded-md text-sky-300">
-                            {message}
+                            {
+                                message.severity
+                                    + (message.location ? ` (${message.location.line}:${message.location.column})` : '')
+                                    +": "+message.message
+                            }
                         </pre>
                     </div>
                 )}
