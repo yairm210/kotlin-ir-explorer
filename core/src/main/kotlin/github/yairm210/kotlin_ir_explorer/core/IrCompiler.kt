@@ -89,12 +89,12 @@ private fun getCompilerConfiguration(messageCollector: MessageCollectorImpl): Co
     configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
 
     // Reference set A: The JDK. This includes fundamental things like java.io.Serializable
-    // Since we're ALREADY running java we get this for free :)
+    // This means that the server needs to run with a JDK, and not just a JRE.
     val sdkRoot = System.getProperty("java.home")
     configuration.put(JVMConfigurationKeys.JDK_HOME, File(sdkRoot))
 
     // Reference set B: The classes we've included in this jar. This includes e.g. Kotlin stdlib.
-    // Again we can get the classpath from running code
+    // Again we can get the classpath from running code, since this is Kotlin we're writing in :)
     val classpath = System.getProperty("java.class.path")
     val files = classpath.split(':').map { File(it) }
     configuration.addJvmClasspathRoots(files)
