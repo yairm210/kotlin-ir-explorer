@@ -42,10 +42,6 @@ fun Application.configureRouting() {
             // get body as code
             
             val kotlinCode = call.receiveText()
-//            val kotlinCode = call.response ?: return@get call.respondText(
-//                "Missing or malformed 'kotlin' parameter",
-//                status = HttpStatusCode.BadRequest
-//            )
 
             val compilationResult = getCompilationResult(kotlinCode)
 
@@ -100,7 +96,6 @@ fun Application.configureRouting() {
             )
             call.respond(response)
         }
-        // Static plugin. Try to access `/static/index.html`
         staticResources("/", "static/dist")
     }
 }
