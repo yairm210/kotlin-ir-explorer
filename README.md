@@ -10,7 +10,7 @@ Run `docker run -p 8080:8080 yairm210/kotlin-ir-explorer` to start the server, a
 
 ## What?
 
-Kotlin compilation is a multi-step process that converts Kotlin code to an intermediate representation (IR) before generating bytecode.
+Kotlin compilation is a multi-step process that converts Kotlin code to an intermediate representation (IR) before generating bytecode. This is essentially the Kotlin AST.
 
 Usually, the final generated results are available for examination, but the **intermediate code** is not available to the developer. No longer! :D
 
