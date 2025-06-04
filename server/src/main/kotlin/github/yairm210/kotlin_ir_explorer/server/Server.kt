@@ -44,6 +44,8 @@ fun Application.configureRouting() {
             val kotlinCode = call.receiveText()
 
             val compilationResult = getCompilationResult(kotlinCode)
+            val withOffsetCommentParam = call.request.queryParameters["withOffsetComment"]
+            val withOffsetComment = withOffsetCommentParam != null && withOffsetCommentParam.lowercase() == "true"
 
 
             @Serializable
@@ -66,7 +68,7 @@ fun Application.configureRouting() {
             )
             
             val mermaidGraph = if (compilationResult.irModuleFragment == null) null
-                    else IrMermaidGraphConverter.convertToMermaidGraph(compilationResult.irModuleFragment!!)
+                    else IrMermaidGraphConverter.convertToMermaidGraph(compilationResult.irModuleFragment!!, withOffsetComment)
             
             if (compilationResult.irModuleFragment == null) println("Result is null")
             else {

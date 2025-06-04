@@ -20,6 +20,10 @@ fun main() {
 `);
 
     const [mermaidGraphText, setMermaidGraphText] = useState("");
+    
+    const [cursorPositionOffset, setCursorPositionOffset] = useState(0)
+    const [mermaidGraphTextColored, setMermaidGraphTextColored] = useState("");
+    
     const [compilerMessages, setCompilerMessages] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
@@ -32,7 +36,9 @@ fun main() {
         try {
             // In a real implementation, you'd send `codeToProcess` to your backend
             // which would return the Mermaid graph *text representation*.
-            const response = await axios.post("/api/kotlinToMermaid", codeToProcess)
+            const response = await axios.post("/api/kotlinToMermaid?withOffsetComment=true", codeToProcess)
+            // TODO: How can I auto-recognize when this is run via npm run start, so I can know to use the localhost? :think:
+            // const response = await axios.post("http://localhost:8080/api/kotlinToMermaid?withOffsetComment=true", codeToProcess)
             const graphText = response.data.mermaidGraph
             const messages = response.data.messages 
             setMermaidGraphText(graphText)
@@ -70,6 +76,32 @@ fun main() {
     const handleCodeChange = (newCode) => {
         setCode(newCode);
     };
+
+    const handleCursorOffsetChange = (offset) => {
+        setCursorPositionOffset(offset)
+    };
+    
+    // The actual displayed graph is the graph we got plus coloring on all elements which contain the cursor position
+    useEffect(() => {
+            if (mermaidGraphText === "") return
+            const newMermaidGraphTextLines = mermaidGraphText.split("\n")
+                .map(line => {
+                    // Offset comment looks like: " # Offset: ${element.startOffset}-${element.endOffset}"
+                    const offsetSplit = line.split(" %% Offset: ")
+                    if (offsetSplit.length < 2) return line // No comment
+    
+                    const positions = offsetSplit[1].split("-").map(num => parseInt(num))
+                    if (cursorPositionOffset > positions[1] || cursorPositionOffset < positions[0]) return offsetSplit[0]
+    
+                    return offsetSplit[0] + ":::selected" // Coloring classdef
+                })
+    
+            const newMermaidGraphText = newMermaidGraphTextLines.join("\n") + "\n\n classDef selected stroke:#f00"
+            
+            setMermaidGraphTextColored(newMermaidGraphText)
+        },
+        [cursorPositionOffset, mermaidGraphText]
+    )
     
     const onWarningLocationClick = (location) => {
         if (!location) return;
@@ -106,11 +138,11 @@ fun main() {
 
             <div className="flex flex-1 overflow-hidden">
                 <div className="w-1/2 border-r border-slate-800 bg-[#1a1c25]">
-                    <CodeEditor code={code} onChange={handleCodeChange} />
+                    <CodeEditor code={code} onChangeContent={handleCodeChange} onChangeCursorPosition={handleCursorOffsetChange} />
                 </div>
                 <div className="w-1/2 bg-[#1a1c25] p-4 overflow-auto">
                     <GraphViewer
-                        mermaidGraphText={mermaidGraphText}
+                        mermaidGraphText={mermaidGraphTextColored}
                         compilerMessages={compilerMessages}
                         isProcessing={isProcessing}
                         error={error}

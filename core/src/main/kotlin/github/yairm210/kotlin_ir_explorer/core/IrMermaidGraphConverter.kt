@@ -7,17 +7,21 @@ import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 
 object IrMermaidGraphConverter {
-    fun convertToMermaidGraph(irModuleFragment: IrModuleFragment): String {
+    fun convertToMermaidGraph(irModuleFragment: IrModuleFragment,
+                              /** Whether to add a comment that shows the start-end positions of each element in the input text
+                               * Note that this causes the graph to not render properly despite the comment being ostensibly valid mermaid :|
+                               * */
+                              withOffsetComment: Boolean = false): String {
         val sb = StringBuilder()
         sb.appendLine("graph TD")
         irModuleFragment.files.forEach { file ->
-            file.accept(IrMermaidGraphListener(), Triple(null, sb, 0))
+            file.accept(IrMermaidGraphListener(withOffsetComment), Triple(null, sb, 0))
         }
         return sb.toString()
     }
 }
 
-class IrMermaidGraphListener:IrElementVisitor<Unit, Triple<IrElement?, StringBuilder, Int>> {
+class IrMermaidGraphListener(val withOffsetComment: Boolean) :IrElementVisitor<Unit, Triple<IrElement?, StringBuilder, Int>> {
     override fun visitElement(element: IrElement, data: Triple<IrElement?, StringBuilder, Int>) {
         val (parent, stringbuilder:StringBuilder, depth) = data
         
@@ -25,8 +29,10 @@ class IrMermaidGraphListener:IrElementVisitor<Unit, Triple<IrElement?, StringBui
         stringbuilder.append("  ".repeat(depth))
         // Need to escape the rendered string to avoid issues with mermaid
 
+        val offsetComment = if (withOffsetComment) " %% Offset: ${element.startOffset}-${element.endOffset}"
+            else ""
+        stringbuilder.appendLine("${element.hashCode()}[\"${element.render()}\"]$offsetComment")
         
-        stringbuilder.appendLine("${element.hashCode()}[\"${element.render()}\"]")
         
         // IDs of the elements are the hashcodes
         if (parent != null) {

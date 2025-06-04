@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as monaco from 'monaco-editor';
 
-export default function CodeEditor({ code, onChange }) {
+export default function CodeEditor({ code, onChangeContent, onChangeCursorPosition: onChangeCursorOffset }) {
     const containerRef = useRef(null);
     const [editor, setEditor] = useState(null);
 
@@ -87,8 +87,15 @@ export default function CodeEditor({ code, onChange }) {
 
         // Add event listener for content changes
         const disposable = editorInstance.onDidChangeModelContent(() => {
-            onChange(editorInstance.getValue());
+            onChangeContent(editorInstance.getValue());
         });
+        
+        editorInstance.onDidChangeCursorPosition((e) => {
+            // The editor speaks in position (line/column), the IR element speaks in offset (absolute int)
+            // The callback is in "IrSpeak" so we need to convert it
+            const offset = editorInstance.getModel().getOffsetAt(e.position)
+            onChangeCursorOffset(offset)
+        })
 
         setEditor(editorInstance);
 
