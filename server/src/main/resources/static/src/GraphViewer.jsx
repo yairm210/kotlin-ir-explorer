@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import { Loader2, AlertTriangle, ImageOff } from 'lucide-react';
 import mermaid from 'mermaid';
 import svgPanZoom from 'svg-pan-zoom';
@@ -29,8 +29,8 @@ mermaid.initialize(
 export default function GraphViewer({ mermaidGraphText, compilerMessages, isProcessing,
                                         error, onWarningLocationClick }) {
     const svgContainerRef = useRef(null);
-    const [rendering, setRendering] = useState(false);
     const [renderError, setRenderError] = useState(null);
+    
     const [svg, setSvg] = useState(null);
 
     const graphId = `mermaid-graph-${Date.now()}`;
@@ -39,7 +39,6 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
     useEffect(() => {
         if (!mermaidGraphText || isProcessing) return
 
-        setRendering(true);
         setRenderError(null);
 
         try {
@@ -52,7 +51,6 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
                             bindFunctions(svgContainerRef.current); // For interactivity if any
                         }
                     }
-                    setRendering(false);
                     setSvg(svg);
                 })
                 .catch(err => {
@@ -61,7 +59,6 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
                     if (svgContainerRef.current) {
                         svgContainerRef.current.innerHTML = `<div class="text-red-400 p-4">Error rendering diagram. Check console.</div>`;
                     }
-                    setRendering(false);
                 });
         } catch (err) {
             console.error("Synchronous Mermaid error:", err);
@@ -69,25 +66,26 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
             if (svgContainerRef.current) {
                 svgContainerRef.current.innerHTML = `<div class="text-red-400 p-4">Critical diagram rendering error.</div>`;
             }
-            setRendering(false);
         }
 
     }, [mermaidGraphText, isProcessing]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!svgContainerRef.current || !svg) return;
         const svgElement = svgContainerRef.current.children[0];
         // make svg size to its current size - required so it's not a tiny thing
         svgElement.style.width = '100%';
         svgElement.style.height = '100%';
+        svgElement.style.visibility = 'hidden'; // Hide until pan-zoom is applied
         svgPanZoom(svgElement, {
             controlIconsEnabled: true
         })
+        svgElement.style.visibility = 'visible'; // Show the SVG after pan-zoom is applied
     })
 
     let content;
 
-    if (isProcessing || rendering) {
+    if (isProcessing) {
         content = (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
                 <Loader2 className="h-12 w-12 animate-spin mb-4 text-sky-400" />
