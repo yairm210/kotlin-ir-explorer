@@ -36,8 +36,8 @@ fun main() {
         try {
             // In a real implementation, you'd send `codeToProcess` to your backend
             // which would return the Mermaid graph *text representation*.
-            const response = await axios.post("/api/kotlinToMermaid?withOffsetComment=true", codeToProcess)
             // TODO: How can I auto-recognize when this is run via npm run start, so I can know to use the localhost? :think:
+            const response = await axios.post("/api/kotlinToMermaid?withOffsetComment=true", codeToProcess)
             // const response = await axios.post("http://localhost:8080/api/kotlinToMermaid?withOffsetComment=true", codeToProcess)
             const graphText = response.data.mermaidGraph
             const messages = response.data.messages 
@@ -83,7 +83,10 @@ fun main() {
     
     // The actual displayed graph is the graph we got plus coloring on all elements which contain the cursor position
     useEffect(() => {
-            if (mermaidGraphText === "") return
+            if (!mermaidGraphText){  // null or empty
+                setMermaidGraphTextColored(null)
+                return
+            }
             const newMermaidGraphTextLines = mermaidGraphText.split("\n")
                 .map(line => {
                     // Offset comment looks like: " # Offset: ${element.startOffset}-${element.endOffset}"
