@@ -82,6 +82,8 @@ fun Application.configureRouting() {
 
             val renderedMessages = compilationResult.messages
                 .filter { it.severity.isError || it.severity.isWarning }
+                // Not relevant for the user
+                .filterNot { it.message.contains("Classpath entry points to a non-existent location") }
                 .map {
                     CompilerMessage(
                         severity = it.severity.presentableName,
