@@ -105,7 +105,7 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
     } else if (!mermaidGraphText || mermaidGraphText.trim() === '') {
         // This condition checks for specific placeholder texts in the mermaid string
         content = (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400">
+            <div className="h-full w-full flex flex-col items-center justify-center text-slate-400">
                 <ImageOff className="h-16 w-16 mb-4 text-slate-500" />
                 {compilerMessages.map(message => 
                     <div className="mt-4 text-sm bg-[#2d303e] p-3 rounded-md text-left max-w w-full"
