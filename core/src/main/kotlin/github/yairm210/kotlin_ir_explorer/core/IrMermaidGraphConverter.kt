@@ -27,11 +27,14 @@ class IrMermaidGraphListener(val withOffsetComment: Boolean) :IrElementVisitor<U
         
         // Don't use stringbuilder.repeat since it's new to JVM 21
         stringbuilder.append("  ".repeat(depth))
-        // Need to escape the rendered string to avoid issues with mermaid
 
         val offsetComment = if (withOffsetComment) " %% Offset: ${element.startOffset}-${element.endOffset}"
             else ""
-        stringbuilder.appendLine("${element.hashCode()}[\"${element.render()}\"]$offsetComment")
+        
+        // Need to escape the rendered string to avoid issues with mermaid
+        val elementText = "\"${element::class.simpleName}\n" +
+                "${element.render()}\""
+        stringbuilder.appendLine("${element.hashCode()}[$elementText]$offsetComment")
         
         
         // IDs of the elements are the hashcodes
