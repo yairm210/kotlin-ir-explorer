@@ -2,6 +2,8 @@ import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import { Loader2, AlertTriangle, ImageOff } from 'lucide-react';
 import mermaid from 'mermaid';
 import svgPanZoom from 'svg-pan-zoom';
+import {toast} from "sonner";
+
 
 mermaid.initialize(
     {
@@ -30,11 +32,11 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
                                         error, onWarningLocationClick }) {
     const svgContainerRef = useRef(null);
     const [renderError, setRenderError] = useState(null);
-    
+
     const [svg, setSvg] = useState(null);
 
     const graphId = `mermaid-graph-${Date.now()}`;
-    
+
     // Render graph when text or library readiness changes
     useEffect(() => {
         if (!mermaidGraphText || isProcessing) return
@@ -44,7 +46,7 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
         try {
             // mermaid.render() returns a promise with the SVG
             mermaid.render(graphId, mermaidGraphText)
-                .then(({ svg, bindFunctions }) => {
+                .then(({svg, bindFunctions}) => {
                     if (svgContainerRef.current) {
                         svgContainerRef.current.innerHTML = svg;
                         if (bindFunctions) {
@@ -88,14 +90,14 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
     if (isProcessing) {
         content = (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                <Loader2 className="h-12 w-12 animate-spin mb-4 text-sky-400" />
+                <Loader2 className="h-12 w-12 animate-spin mb-4 text-sky-400"/>
                 <p>{isProcessing ? "Processing Code..." : "Rendering Diagram..."}</p>
             </div>
         );
     } else if (error || renderError) {
         content = (
             <div className="h-full flex flex-col items-center justify-center text-red-400">
-                <AlertTriangle className="h-12 w-12 mb-4" />
+                <AlertTriangle className="h-12 w-12 mb-4"/>
                 <p className="font-semibold">Error</p>
                 <p className="text-sm text-red-500 mt-1">{error || renderError}</p>
             </div>
@@ -104,8 +106,8 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
         // This condition checks for specific placeholder texts in the mermaid string
         content = (
             <div className="h-full w-full flex flex-col items-center justify-center text-slate-400">
-                <ImageOff className="h-16 w-16 mb-4 text-slate-500" />
-                {compilerMessages.map(message => 
+                <ImageOff className="h-16 w-16 mb-4 text-slate-500"/>
+                {compilerMessages.map(message =>
                     <div className="mt-4 text-sm bg-[#2d303e] p-3 rounded-md text-left max-w w-full"
                          style={{cursor: 'pointer'}} // as 
                          onClick={() => onWarningLocationClick(message.location)}>
@@ -113,8 +115,8 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
                         <pre className="mt-2 overflow-x-auto text-xs bg-[#0f1117] p-2 rounded-md text-sky-300">
                             {
                                 message.severity
-                                    + (message.location ? ` (${message.location.line}:${message.location.column})` : '')
-                                    +": "+message.message
+                                + (message.location ? ` (${message.location.line}:${message.location.column})` : '')
+                                + ": " + message.message
                             }
                         </pre>
                     </div>
@@ -131,10 +133,22 @@ export default function GraphViewer({ mermaidGraphText, compilerMessages, isProc
         );
     }
 
+    const copyMermaidGraphButton = <button
+        onClick={() => {
+            navigator.clipboard.writeText(mermaidGraphText)
+                .then(() => toast.success("Mermaid graph copied to clipboard!"))
+        }}
+        className="absolute top-2 right-2 z-10 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded shadow text-xs border border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-400"
+    >
+        Copy Mermaid Graph
+    </button>
+
     return (
         <div
             className="h-full w-full bg-[#0f1117] rounded-lg border border-slate-800 flex justify-center items-center overflow-hidden">
             {content}
+            {copyMermaidGraphButton}
         </div>
     );
 }
+
