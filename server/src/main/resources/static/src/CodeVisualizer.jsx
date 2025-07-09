@@ -29,6 +29,43 @@ fun main() {
     const [error, setError] = useState(null);
     const timerRef = useRef(null);
 
+    // GPT-generated code for resizable layout
+    const [leftWidth, setLeftWidth] = useState(50); // percent
+    const containerRef = useRef(null);
+    const isDragging = useRef(false);
+
+    const startDragging = (e) => {
+        isDragging.current = true;
+        document.body.style.cursor = 'col-resize';
+    };
+    const stopDragging = () => {
+        isDragging.current = false;
+        document.body.style.cursor = '';
+    };
+    const onDrag = (e) => {
+        if (!isDragging.current || !containerRef.current) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const rect = containerRef.current.getBoundingClientRect();
+        let percent = ((clientX - rect.left) / rect.width) * 100;
+        percent = Math.max(10, Math.min(90, percent)); // clamp between 10% and 90%
+        setLeftWidth(percent);
+    };
+    React.useEffect(() => {
+        const move = (e) => onDrag(e);
+        const up = () => stopDragging();
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', up);
+        window.addEventListener('touchmove', move);
+        window.addEventListener('touchend', up);
+        return () => {
+            window.removeEventListener('mousemove', move);
+            window.removeEventListener('mouseup', up);
+            window.removeEventListener('touchmove', move);
+            window.removeEventListener('touchend', up);
+        };
+    }, []);
+    // End of GPT-generated code
+
     const processCode = async (codeToProcess) => {
         setIsProcessing(true);
         setError(null);
@@ -139,11 +176,17 @@ fun main() {
                 </div>
             </header>
 
-            <div className="flex flex-1 overflow-hidden">
-                <div className="w-1/2 border-r border-slate-800 bg-[#1a1c25]">
+            <div className="flex flex-1 overflow-hidden" ref={containerRef}>
+                <div style={{width: `${leftWidth}%`}} className="h-full border-r border-slate-800 bg-[#1a1c25] min-w-[100px] max-w-[90%]">
                     <CodeEditor code={code} onChangeContent={handleCodeChange} onChangeCursorPosition={handleCursorOffsetChange} />
                 </div>
-                <div className="w-1/2 bg-[#1a1c25] p-4 overflow-auto">
+                <div
+                    style={{width: '6px', cursor: 'col-resize', zIndex: 20}}
+                    className="h-full bg-slate-900 hover:bg-slate-700 transition-colors duration-100"
+                    onMouseDown={startDragging}
+                    onTouchStart={startDragging}
+                />
+                <div style={{width: `${100 - leftWidth}%`}} className="h-full bg-[#1a1c25] p-4 overflow-auto min-w-[100px] max-w-[90%]">
                     <GraphViewer
                         mermaidGraphText={mermaidGraphTextColored}
                         compilerMessages={compilerMessages}
@@ -156,3 +199,4 @@ fun main() {
         </div>
     );
 }
+
