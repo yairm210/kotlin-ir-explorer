@@ -7,7 +7,7 @@ repositories {
 
 
 plugins {
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "2.1.20"
     `kotlin-dsl`
 }
 
@@ -21,7 +21,7 @@ subprojects {
 
     dependencies {
 
-        "implementation"("org.jetbrains.kotlin:kotlin-compiler:2.0.0")
+        "implementation"("org.jetbrains.kotlin:kotlin-compiler:2.1.20")
 
         "testImplementation"("org.junit.jupiter:junit-jupiter:5.12.1")
 

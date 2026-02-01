@@ -5,7 +5,7 @@
 plugins {
     application
     // kotlinx serialization
-    kotlin("plugin.serialization") version "1.9.0"
+    kotlin("plugin.serialization") version "2.1.20"
     id("com.gradleup.shadow") version "8.3.5"
 }
 
@@ -32,7 +32,7 @@ dependencies {
     //testing
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     // kotlin test
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.1.20")
 }
 
 
